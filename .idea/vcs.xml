@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_catch2-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_cmath-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_memory-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_os-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_platform-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_tinystl-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_imageformat-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_theforge-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/utils_gameappshell_impl_basic-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/utils_gameappshell_interface-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/utils_simple_logmanager-src" vcs="Git" />
+  </component>
+</project>
