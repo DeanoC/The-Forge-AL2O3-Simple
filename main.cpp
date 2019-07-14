@@ -16,6 +16,8 @@ TheForge_FenceHandle renderCompleteFences[gImageCount];
 TheForge_SemaphoreHandle imageAcquiredSemaphore;
 TheForge_SemaphoreHandle renderCompleteSemaphores[gImageCount];
 
+TheForge_ShaderHandle shader;
+
 uint32_t gFrameIndex = 0;
 
 static void GameAppShellToTheForge_WindowsDesc(TheForge_WindowsDesc& windowDesc) {
@@ -81,6 +83,17 @@ static bool AddDepthBuffer() {
 	TheForge_AddRenderTarget(renderer, &depthRT, &depthBuffer);
 
 	return depthBuffer;
+}
+
+static bool AddShader() {
+
+	TheForge_ShaderLoadDesc basicShader = {};
+	basicShader.mStages[0] = { "passthrough.vert", NULL, 0, TheForge_FSR_SrcShaders };
+	basicShader.mStages[1] = { "colour.frag", NULL, 0, TheForge_FSR_SrcShaders };
+
+	TheForge_LoadShader(renderer, &basicShader, &shader);
+
+	return true;
 }
 
 static bool Init() {
