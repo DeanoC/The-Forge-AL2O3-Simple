@@ -172,7 +172,7 @@ static bool AddTriangle() {
 	triIbDesc.mDesc.mDescriptors = TheForge_DESCRIPTOR_TYPE_INDEX_BUFFER;
 	triIbDesc.mDesc.mMemoryUsage = TheForge_RMU_GPU_ONLY;
 	triIbDesc.mDesc.mSize = triIndexDataSize;
-	triIbDesc.mDesc.mVertexStride = sizeof(uint16_t);
+	triIbDesc.mDesc.mIndexType = TheForge_IT_UINT16;
 	triIbDesc.pData = triIndices;
 	triIbDesc.pBuffer = &indexBuffer;
 	TheForge_AddBuffer(&triIbDesc, true);
