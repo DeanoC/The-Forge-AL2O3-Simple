@@ -4,6 +4,7 @@
 #include "utils_simple_logmanager/logmanager.h"
 
 const uint32_t gImageCount = 3;
+uint32_t gFrameIndex = 0;
 
 TheForge_RendererHandle renderer;
 TheForge_QueueHandle graphicsQueue;
@@ -17,8 +18,17 @@ TheForge_SemaphoreHandle imageAcquiredSemaphore;
 TheForge_SemaphoreHandle renderCompleteSemaphores[gImageCount];
 
 TheForge_ShaderHandle shader;
+TheForge_RootSignatureHandle rootSignature;
+TheForge_DescriptorBinderHandle descriptorBinder;
+TheForge_RasterizerStateHandle rasterizerState;
+TheForge_DepthStateHandle depthState;
+TheForge_BufferHandle vertexBuffer;
+TheForge_BufferHandle indexBuffer;
+TheForge_PipelineHandle pipeline;
 
-uint32_t gFrameIndex = 0;
+TheForge_SwapChainDesc swapChainDesc;
+TheForge_RenderTargetDesc renderTargetDesc;
+TheForge_RenderTargetDesc depthRTDesc;
 
 static void GameAppShellToTheForge_WindowsDesc(TheForge_WindowsDesc& windowDesc) {
 	GameAppShell_WindowDesc gasWindowDesc;
@@ -46,7 +56,6 @@ static bool AddSwapChain() {
 	TheForge_WindowsDesc windowDesc{};
 	GameAppShellToTheForge_WindowsDesc(windowDesc);
 
-	TheForge_SwapChainDesc swapChainDesc{};
 	swapChainDesc.pWindow = &windowDesc;
 	swapChainDesc.presentQueueCount = 1;
 	swapChainDesc.pPresentQueues = &graphicsQueue;
@@ -60,6 +69,9 @@ static bool AddSwapChain() {
 	swapChainDesc.enableVsync = false;
 	TheForge_AddSwapChain(renderer, &swapChainDesc, &swapChain);
 
+	TheForge_RenderTargetHandle renderTarget = TheForge_SwapChainGetRenderTarget(swapChain, 0);
+	memcpy(&renderTargetDesc, TheForge_RenderTargetGetDesc(renderTarget), sizeof(TheForge_RenderTargetDesc));
+
 	return swapChain;
 }
 
@@ -68,19 +80,18 @@ static bool AddDepthBuffer() {
 	GameAppShellToTheForge_WindowsDesc(windowDesc);
 
 	// Add depth buffer
-	TheForge_RenderTargetDesc depthRT{};
-	depthRT.arraySize = 1;
-	depthRT.clearValue.depth = 1.0f;
-	depthRT.clearValue.stencil = 0;
-	depthRT.depth = 1;
-	depthRT.format = TheForge_IF_D32F;
-	depthRT.width = windowDesc.windowedRect.right - windowDesc.windowedRect.left;
-	depthRT.height = windowDesc.windowedRect.bottom - windowDesc.windowedRect.top;
-	ASSERT(depthRT.width);
-	ASSERT(depthRT.height);
-	depthRT.sampleCount = TheForge_SC_1;
-	depthRT.sampleQuality = 0;
-	TheForge_AddRenderTarget(renderer, &depthRT, &depthBuffer);
+	depthRTDesc.arraySize = 1;
+	depthRTDesc.clearValue.depth = 1.0f;
+	depthRTDesc.clearValue.stencil = 0;
+	depthRTDesc.depth = 1;
+	depthRTDesc.format = TheForge_IF_D32F;
+	depthRTDesc.width = windowDesc.windowedRect.right - windowDesc.windowedRect.left;
+	depthRTDesc.height = windowDesc.windowedRect.bottom - windowDesc.windowedRect.top;
+	ASSERT(depthRTDesc.width);
+	ASSERT(depthRTDesc.height);
+	depthRTDesc.sampleCount = TheForge_SC_1;
+	depthRTDesc.sampleQuality = 0;
+	TheForge_AddRenderTarget(renderer, &depthRTDesc, &depthBuffer);
 
 	return depthBuffer;
 }
@@ -88,14 +99,124 @@ static bool AddDepthBuffer() {
 static bool AddShader() {
 
 	TheForge_ShaderLoadDesc basicShader = {};
-	basicShader.mStages[0] = { "passthrough.vert", NULL, 0, TheForge_FSR_SrcShaders };
-	basicShader.mStages[1] = { "colour.frag", NULL, 0, TheForge_FSR_SrcShaders };
+	basicShader.target = TheForge_ST_5_1;
+	basicShader.stages[0] = { "passthrough.vert", NULL, 0, TheForge_FSR_SrcShaders };
+	basicShader.stages[1] = { "colour.frag", NULL, 0, TheForge_FSR_SrcShaders };
 
 	TheForge_LoadShader(renderer, &basicShader, &shader);
 
-	return true;
+	return shader;
 }
 
+static bool AddRootSignature() {
+	TheForge_ShaderHandle     shaders[] { shader };
+	TheForge_RootSignatureDesc rootDesc {};
+	rootDesc.staticSamplerCount = 0;
+	rootDesc.shaderCount = 1;
+	rootDesc.pShaders = shaders;
+	TheForge_AddRootSignature(renderer, &rootDesc, &rootSignature);
+	return rootSignature;
+}
+
+static bool AddDescriptorBinder() {
+	TheForge_DescriptorBinderDesc descriptorBinderDesc[1] = {
+			{rootSignature}
+	};
+
+	TheForge_AddDescriptorBinder(renderer, 0, 1, descriptorBinderDesc, &descriptorBinder);
+
+	return descriptorBinder;
+}
+static bool AddRasterizerState() {
+	TheForge_RasterizerStateDesc rasterizerStateDesc {};
+
+	rasterizerStateDesc.cullMode = TheForge_CM_NONE;
+	TheForge_AddRasterizerState(renderer, &rasterizerStateDesc, &rasterizerState);
+
+	return rasterizerState;
+}
+
+static bool AddDepthState() {
+	TheForge_DepthStateDesc depthStateDesc {};
+	depthStateDesc.depthTest = true;
+	depthStateDesc.depthWrite = true;
+	depthStateDesc.depthFunc = TheForge_CMP_LEQUAL;
+	TheForge_AddDepthState(renderer, &depthStateDesc, &depthState);
+
+	return depthState;
+}
+static bool AddTriangle() {
+	float const triVerts[] = {
+			//x     y     z     r     g     b
+			0.5f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.5f, 0.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 1.0f,
+	};
+
+	uint16_t const triIndices[] = {
+			0, 1, 2
+	};
+
+	uint64_t triVertsDataSize = 3 * 6 * sizeof(float);
+	TheForge_BufferLoadDesc triVbDesc {};
+	triVbDesc.mDesc.mDescriptors = TheForge_DESCRIPTOR_TYPE_VERTEX_BUFFER;
+	triVbDesc.mDesc.mMemoryUsage = TheForge_RMU_GPU_ONLY;
+	triVbDesc.mDesc.mSize = triVertsDataSize;
+	triVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
+	triVbDesc.pData = triVerts;
+	triVbDesc.pBuffer = &vertexBuffer;
+	TheForge_AddBuffer(&triVbDesc, true);
+
+	uint64_t triIndexDataSize = 3 * sizeof(uint16_t);
+	TheForge_BufferLoadDesc triIbDesc {};
+	triIbDesc.mDesc.mDescriptors = TheForge_DESCRIPTOR_TYPE_INDEX_BUFFER;
+	triIbDesc.mDesc.mMemoryUsage = TheForge_RMU_GPU_ONLY;
+	triIbDesc.mDesc.mSize = triIndexDataSize;
+	triIbDesc.mDesc.mVertexStride = sizeof(uint16_t);
+	triIbDesc.pData = triIndices;
+	triIbDesc.pBuffer = &indexBuffer;
+	TheForge_AddBuffer(&triIbDesc, true);
+
+	TheForge_FinishResourceLoading();
+
+	return indexBuffer && vertexBuffer;
+}
+
+static bool AddPipeline() {
+
+	TheForge_VertexLayout vertexLayout {};
+	vertexLayout.attribCount = 2;
+	vertexLayout.attribs[0].semantic = TheForge_SS_POSITION;
+	vertexLayout.attribs[0].format = TheForge_IF_RGB32F;
+	vertexLayout.attribs[0].binding = 0;
+	vertexLayout.attribs[0].location = 0;
+	vertexLayout.attribs[0].offset = 0;
+	vertexLayout.attribs[1].semantic = TheForge_SS_COLOR;
+	vertexLayout.attribs[1].format = TheForge_IF_RGB32F;
+	vertexLayout.attribs[1].binding = 0;
+	vertexLayout.attribs[1].location = 1;
+	vertexLayout.attribs[1].offset = 3 * sizeof(float);
+
+	TheForge_PipelineDesc desc {};
+	desc.type = TheForge_PT_GRAPHICS;
+
+	TheForge_GraphicsPipelineDesc& pipelineSettings = desc.graphicsDesc;
+	pipelineSettings.primitiveTopo = TheForge_PT_TRI_LIST;
+	pipelineSettings.renderTargetCount = 1;
+	pipelineSettings.depthState = depthState;
+	pipelineSettings.pColorFormats = &renderTargetDesc.format;
+	pipelineSettings.pSrgbValues = &renderTargetDesc.sRGB;
+	pipelineSettings.sampleCount = renderTargetDesc.sampleCount;
+	pipelineSettings.sampleQuality = renderTargetDesc.sampleQuality;
+	pipelineSettings.depthStencilFormat = depthRTDesc.format;
+	pipelineSettings.rootSignature = rootSignature;
+	pipelineSettings.shaderProgram = shader;
+	pipelineSettings.pVertexLayout = &vertexLayout;
+	pipelineSettings.rasterizerState = rasterizerState;
+	TheForge_AddPipeline(renderer, &desc, &pipeline);
+
+	return pipeline;
+}
 static bool Init() {
 	LOGINFO("Initing");
 	// window and renderer setup
@@ -125,6 +246,8 @@ static bool Init() {
 	}
 	TheForge_AddSemaphore(renderer, &imageAcquiredSemaphore);
 
+	TheForge_InitResourceLoaderInterface(renderer, nullptr);
+
 	return true;
 }
 
@@ -134,6 +257,27 @@ static bool Load() {
 		return false;
 
 	if (!AddDepthBuffer())
+		return false;
+
+	if (!AddShader())
+		return false;
+
+	if (!AddRootSignature())
+		return false;
+
+	if (!AddRasterizerState())
+		return false;
+
+	if (!AddDepthState())
+		return false;
+
+	if (!AddDescriptorBinder())
+		return false;
+
+	if (!AddPipeline())
+		return false;
+
+	if (!AddTriangle())
 		return false;
 
 	return true;
@@ -197,6 +341,12 @@ static void Draw(double deltaMS) {
 												 TheForge_RenderTargetGetDesc(renderTarget)->width,
 												 TheForge_RenderTargetGetDesc(renderTarget)->height
 	);
+
+	TheForge_CmdBindPipeline(cmd, pipeline);
+	TheForge_CmdBindDescriptors(cmd, descriptorBinder, rootSignature, 0, nullptr);
+	TheForge_CmdBindVertexBuffer(cmd, 1, &vertexBuffer, nullptr);
+	TheForge_CmdBindIndexBuffer(cmd, indexBuffer, 0);
+	TheForge_CmdDrawIndexed(cmd, 3, 0, 0);
 
 	TheForge_CmdBindRenderTargets(cmd,
 																0,
