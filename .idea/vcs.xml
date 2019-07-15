@@ -11,6 +11,11 @@
     <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_platform-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_tinystl-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src/external/SPIRV-Headers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src/external/SPIRV-Tools" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src/external/effcee" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src/external/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_directxshadercompiler-src/external/re2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_imageformat-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/gfx_theforge-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/utils_gameappshell_impl_basic-src" vcs="Git" />
