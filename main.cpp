@@ -8,7 +8,7 @@
 #if AL2O3_PLATFORM == AL2O3_PLATFORM_APPLE_MAC
 #define DO_TRIANGLE 1
 #else
-#define DO_TRIANGLE 0
+#define DO_TRIANGLE 1
 #endif
 
 const uint32_t gImageCount = 3;

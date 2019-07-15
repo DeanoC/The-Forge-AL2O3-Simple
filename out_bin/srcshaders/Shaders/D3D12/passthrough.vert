@@ -6,14 +6,14 @@ struct VSInput
 
 struct VSOutput {
 	float4 Position : SV_POSITION;
-    float4 Color : COLOR;
+    float4 Colour : COLOR;
 };
 
 VSOutput main(VSInput input)
 {
     VSOutput result;
 
-    result.Position = input.Position;
+    result.Position = float4(input.Position, 1.0);
     result.Colour = input.Colour;
     return result;
 }
