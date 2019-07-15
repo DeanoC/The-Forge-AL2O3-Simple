@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/al2o3-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/catchorg_catch2-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_catch2-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_cmath-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fetchdeps/al2o3_memory-src" vcs="Git" />

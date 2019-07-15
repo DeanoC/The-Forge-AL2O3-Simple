@@ -2,6 +2,7 @@
 #include "gfx_theforge/theforge.h"
 #include "utils_gameappshell/gameappshell.h"
 #include "utils_simple_logmanager/logmanager.h"
+#include <stdlib.h>
 
 const uint32_t gImageCount = 3;
 uint32_t gFrameIndex = 0;
