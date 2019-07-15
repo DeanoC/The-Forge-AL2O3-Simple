@@ -4,6 +4,13 @@
 #include "utils_simple_logmanager/logmanager.h"
 #include <stdlib.h>
 
+// TODO TMP still bringing up binary shader support, so far the triangle is metal only
+#ifdef METAL
+#define DO_TRIANGLE 1
+#else
+#define DO_TRIANGLE 0
+#endif
+
 const uint32_t gImageCount = 3;
 uint32_t gFrameIndex = 0;
 
@@ -259,6 +266,7 @@ static bool Load() {
 
 	if (!AddDepthBuffer())
 		return false;
+#if DO_TRIANGLE == 1
 
 	if (!AddShader())
 		return false;
@@ -280,7 +288,7 @@ static bool Load() {
 
 	if (!AddTriangle())
 		return false;
-
+#endif
 	return true;
 }
 
@@ -342,12 +350,13 @@ static void Draw(double deltaMS) {
 												 TheForge_RenderTargetGetDesc(renderTarget)->width,
 												 TheForge_RenderTargetGetDesc(renderTarget)->height
 	);
-
+#if DO_TRIANGLE == 1
 	TheForge_CmdBindPipeline(cmd, pipeline);
 	TheForge_CmdBindDescriptors(cmd, descriptorBinder, rootSignature, 0, nullptr);
 	TheForge_CmdBindVertexBuffer(cmd, 1, &vertexBuffer, nullptr);
 	TheForge_CmdBindIndexBuffer(cmd, indexBuffer, 0);
 	TheForge_CmdDrawIndexed(cmd, 3, 0, 0);
+#endif
 
 	TheForge_CmdBindRenderTargets(cmd,
 																0,
