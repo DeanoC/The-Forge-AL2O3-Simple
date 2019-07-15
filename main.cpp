@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 // TODO TMP still bringing up binary shader support, so far the triangle is metal only
-#ifdef METAL
+#if AL2O3_PLATFORM == AL2O3_PLATFORM_APPLE_MAC
 #define DO_TRIANGLE 1
 #else
 #define DO_TRIANGLE 0
