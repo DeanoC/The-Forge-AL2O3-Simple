@@ -38,37 +38,19 @@ TheForge_SwapChainDesc swapChainDesc;
 TheForge_RenderTargetDesc renderTargetDesc;
 TheForge_RenderTargetDesc depthRTDesc;
 
-static void GameAppShellToTheForge_WindowsDesc(TheForge_WindowsDesc& windowDesc) {
+static bool AddSwapChain() {
 	GameAppShell_WindowDesc gasWindowDesc;
 	GameAppShell_WindowGetCurrentDesc(&gasWindowDesc);
 
+	TheForge_WindowsDesc windowDesc;
+	memset(&windowDesc, 0, sizeof(TheForge_WindowsDesc));
 	windowDesc.handle = GameAppShell_GetPlatformWindowPtr();
-	windowDesc.windowedRect.right = gasWindowDesc.width;
-	windowDesc.windowedRect.left = 0;
-	windowDesc.windowedRect.bottom = gasWindowDesc.height;
-	windowDesc.windowedRect.top = 0;
-	windowDesc.fullscreenRect = windowDesc.windowedRect;
-	windowDesc.clientRect = windowDesc.windowedRect;
-	windowDesc.fullScreen = false;
-	windowDesc.windowsFlags = 0;
-	windowDesc.bigIcon = gasWindowDesc.bigIcon;
-	windowDesc.smallIcon = gasWindowDesc.smallIcon;
-
-	windowDesc.iconified = gasWindowDesc.iconified;
-	windowDesc.maximized = gasWindowDesc.maximized;
-	windowDesc.minimized = gasWindowDesc.minimized;
-	windowDesc.visible = gasWindowDesc.visible;
-}
-
-static bool AddSwapChain() {
-	TheForge_WindowsDesc windowDesc{};
-	GameAppShellToTheForge_WindowsDesc(windowDesc);
 
 	swapChainDesc.pWindow = &windowDesc;
 	swapChainDesc.presentQueueCount = 1;
 	swapChainDesc.pPresentQueues = &graphicsQueue;
-	swapChainDesc.width = windowDesc.windowedRect.right - windowDesc.windowedRect.left;
-	swapChainDesc.height = windowDesc.windowedRect.bottom - windowDesc.windowedRect.top;
+	swapChainDesc.width = gasWindowDesc.width;
+	swapChainDesc.height = gasWindowDesc.height;
 	ASSERT(swapChainDesc.width);
 	ASSERT(swapChainDesc.height);
 	swapChainDesc.imageCount = gImageCount;
@@ -80,28 +62,21 @@ static bool AddSwapChain() {
 	TheForge_RenderTargetHandle renderTarget = TheForge_SwapChainGetRenderTarget(swapChain, 0);
 	memcpy(&renderTargetDesc, TheForge_RenderTargetGetDesc(renderTarget), sizeof(TheForge_RenderTargetDesc));
 
-	return swapChain;
-}
-
-static bool AddDepthBuffer() {
-	TheForge_WindowsDesc windowDesc{};
-	GameAppShellToTheForge_WindowsDesc(windowDesc);
-
 	// Add depth buffer
 	depthRTDesc.arraySize = 1;
 	depthRTDesc.clearValue.depth = 1.0f;
 	depthRTDesc.clearValue.stencil = 0;
 	depthRTDesc.depth = 1;
 	depthRTDesc.format = TheForge_IF_D32F;
-	depthRTDesc.width = windowDesc.windowedRect.right - windowDesc.windowedRect.left;
-	depthRTDesc.height = windowDesc.windowedRect.bottom - windowDesc.windowedRect.top;
+	depthRTDesc.width = gasWindowDesc.width;
+	depthRTDesc.height = gasWindowDesc.height;
 	ASSERT(depthRTDesc.width);
 	ASSERT(depthRTDesc.height);
 	depthRTDesc.sampleCount = TheForge_SC_1;
 	depthRTDesc.sampleQuality = 0;
 	TheForge_AddRenderTarget(renderer, &depthRTDesc, &depthBuffer);
 
-	return depthBuffer;
+	return swapChain && depthBuffer;
 }
 
 static bool AddShader() {
@@ -173,7 +148,7 @@ static bool AddTriangle() {
 	triVbDesc.mDesc.mVertexStride = sizeof(float) * 6;
 	triVbDesc.pData = triVerts;
 	triVbDesc.pBuffer = &vertexBuffer;
-	TheForge_AddBuffer(&triVbDesc, true);
+	TheForge_LoadBuffer(&triVbDesc, true);
 
 	uint64_t triIndexDataSize = 3 * sizeof(uint16_t);
 	TheForge_BufferLoadDesc triIbDesc {};
@@ -183,7 +158,7 @@ static bool AddTriangle() {
 	triIbDesc.mDesc.mIndexType = TheForge_IT_UINT16;
 	triIbDesc.pData = triIndices;
 	triIbDesc.pBuffer = &indexBuffer;
-	TheForge_AddBuffer(&triIbDesc, true);
+	TheForge_LoadBuffer(&triIbDesc, true);
 
 	TheForge_FinishResourceLoading();
 
@@ -264,8 +239,6 @@ static bool Load() {
 	if (!AddSwapChain())
 		return false;
 
-	if (!AddDepthBuffer())
-		return false;
 #if DO_TRIANGLE == 1
 
 	if (!AddShader())
